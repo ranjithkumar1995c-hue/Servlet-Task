@@ -1,1 +1,385 @@
 
+===========================Cookies=========================
+
+package Cookieproject;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.http.HttpResponse;
+
+
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebServlet("/CookieServlet")
+public class CookieServlet extends HttpServlet  {
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        String name = request.getParameter("uname");
+
+
+	// Create cookie
+    Cookie ck = new Cookie("username", name);
+    ck.setMaxAge(60 * 60); // 1 hour
+    response.addCookie(ck);
+
+    out.println("<h3>Cookie Stored Successfully</h3>");
+    out.println("<a href='ReadCookie'>Read Cookie</a>");
+}
+
+// Optional: to avoid 405 if someone types URL directly
+@Override
+protected void doGet(HttpServletRequest request, HttpServletResponse response)
+        throws IOException {
+    response.getWriter().println("Please submit the form to store cookie.");
+}
+}
+
+=================Dashboard=========================
+package Cookieproject;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
+@WebServlet("/Dashboard")
+public class DashBoard extends HttpServlet {
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        HttpSession session = request.getSession(false);
+
+        if (session == null) {
+            response.sendRedirect("Login.html");
+        } else {
+            String user = (String) session.getAttribute("username");
+            out.println("<h2>Welcome " + user + "</h2>");
+            out.println("<a href='Logout'>Logout</a>");
+        }
+    }
+}
+.................Forward servlet.........................
+package Cookieproject;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebServlet("/ForwardServlet")
+public class ForwardServlet extends HttpServlet {	
+/* 
+  ===>RequestDispatcher is for Server-side forwarding
+  syntax:
+      RequestDispatcher rd = request.getRequestDispatcher("welcome.jsp");
+      rd.forward(request, response);
+
+   ===>URL does NOT change and Same request
+ */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+        String name = request.getParameter("user");
+        request.setAttribute("uname", name);
+        RequestDispatcher rd = request.getRequestDispatcher("welcome.jsp");
+        rd.forward(request, response);
+    } 
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+        out.println("<h3>Please submit the form first.</h3>");
+        out.println("<a href='index1.html'>Go to Form</a>");
+    }  
+}
+
+
+======================Logintask====================
+package Cookieproject;
+
+import java.io.IOException;
+
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
+@WebServlet("/LoginServlet")
+public class LoginServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        String user = request.getParameter("user");
+        String pass = request.getParameter("pass");
+        if (user.equals("admin") && pass.equals("1234")) {
+            HttpSession session = request.getSession();
+            session.setAttribute("username", user);
+            response.sendRedirect("Dashboard");
+        } else {
+            response.getWriter().println("Login Failed");
+        }
+    }
+    // To prevents 405 error
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        response.setContentType("text/html");
+        response.getWriter().println(
+            "<h3>Please login using the login form.</h3>" +
+            "<a href='Login.html'>Go to Login</a>"
+        );
+    }
+}
+=========================Logout Servlet=====================
+package Cookieproject;
+
+import java.io.IOException;
+
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
+@WebServlet("/Logout")
+public class LogoutServlet extends HttpServlet {
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        response.sendRedirect("Login.html");
+    }
+}
+======================PageRedirection=====================
+package Cookieproject;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebServlet("/RedirectServlet")
+public class PageRedirection extends HttpServlet{
+//	sendRedirect() method is for Client-side redirection
+
+//	 Here, URL changes and New request appears
+	 // To  Handles GET request (prevents 405 error)
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        out.println("<h3>Please submit the form to continue.</h3>");
+        out.println("<a href='index.html'>Go to Form</a>");
+    }
+	@Override
+	    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+	            throws IOException {
+	        String name = request.getParameter("user");
+	        if (name.equals("admin")) {
+	            response.sendRedirect("success.html");
+	        } else {
+	            response.sendRedirect("error.html");
+	        }
+	    }
+	}
+
+
+======================Read Cookies================
+package Cookieproject;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebServlet("/ReadCookie")
+public class ReadCookie extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        Cookie[] cookies = request.getCookies();
+        boolean found = false;
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if (c.getName().equals("username")) {
+                    out.println("<h2>Welcome " + c.getValue() + "</h2>");
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found) {
+            out.println("<h3>No cookie found. Please store cookie first.</h3>");
+            out.println("<a href='index.html'>Go Back</a>");
+        }
+    }
+}
+
+=========HTML-File===============
+=========Cookies HTML=============
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Store Cookie data</h1>
+<form action="CookieServlet" method="post">
+    Enter Name:
+    <input type="text" name="uname">
+    <input type="submit" value="Save Cookie">
+</form>
+
+</body>
+</html>
+========Error Html==================
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1>Sorry! Your data cannot be saved due to some error.... </h1>
+
+<h3> Please! Try again..</h3>
+</body>
+</html>
+========Index Html==================
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>RequestDispatcher</title>
+</head>
+<body>
+<h2>Login Page</h2>
+
+<form action="ForwardServlet" method="post">
+    Enter Username:
+    <input type="text" name="user" required>
+    <br><br>
+    <input type="submit" value="Submit">
+</form>
+
+</body>
+</html>
+===========Login Html============
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<form action="LoginServlet" method="post">
+    Username: <input type="text" name="user"><br>
+    Password: <input type="password" name="pass"><br>
+    <input type="submit">
+</form>
+</body>
+</html>
+=========Sucess Html==============
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h1> Congratulations! Your data is saved successfully ...</h1>
+
+</body>
+</html>
+======Upload Html===============
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<form action="UploadServlet" method="post" enctype="multipart/form-data">
+    Select File:
+    <input type="file" name="file">
+    <input type="submit" value="Upload">
+</form>
+</body>
+</html>
+========Web Xml==================
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app id="WebApp_ID" version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+	<display-name>Cookiespro</display-name>
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.htm</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>index.xhtml</welcome-file>
+		<welcome-file>default.html</welcome-file>
+		<welcome-file>default.htm</welcome-file>
+		<welcome-file>default.jsp</welcome-file>
+		<welcome-file>default.xhtml</welcome-file>
+	</welcome-file-list>
+</web-app>
+==========Welcomejsp.Html=============
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h2>Welcome Page</h2>
+
+<h3>
+    Welcome, <%= request.getAttribute("uname") %>
+</h3>
+
+</body>
+</html>.
+
+
+
